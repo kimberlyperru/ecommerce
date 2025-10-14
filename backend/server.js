@@ -22,7 +22,13 @@ mongoose.connect('mongodb://localhost:27017/ecommerce', {
     console.error('Failed to connect to MongoDB', err);
 });
 
+//import routes for products and users
+const productRoutes = require('./routes/products');
+const authRoutes = require('./routes/auth');
 
+//use routes
+app.use('/simple-ecom/products', productRoutes); //all product routes will be prefixed with /simple-ecom/products
+app.use('/simple-ecom/auth', authRoutes); 
 
 //start the server
 app.listen(5000, () => {
