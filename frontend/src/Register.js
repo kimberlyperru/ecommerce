@@ -25,76 +25,47 @@ function Register({ onSwitchToLogin }) {
   };
 
   return (
-    <div style={styles.container}>
-      <h2>🧍‍♂️ Create Account</h2>
-      <form onSubmit={handleRegister} style={styles.form}>
-        <input
-          name="username"
-          placeholder="Fullname"
-          value={form.username}
-          onChange={handleChange}
-          required
-          style={styles.input}
-        />
-       
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          required
-          style={styles.input}
-        />
-        <button type="submit" style={styles.button}>
-          Sign Up
-        </button>
-      </form>
-
-      {message && <p style={styles.message}>{message}</p>}
-
-      <p>
-        Already have an account?{" "}
-        <button onClick={onSwitchToLogin} style={styles.link}>
-          Login
-        </button>
-      </p>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-6 col-lg-4">
+          <div className="card p-4">
+            <div className="card-body">
+              <h2 className="text-center mb-4">🧍‍♂️ Create Account</h2>
+              <form onSubmit={handleRegister}>
+                <div className="mb-3">
+                  <input
+                    name="username"
+                    placeholder="Username"
+                    className="form-control"
+                    value={form.username}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    className="form-control"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary w-100">Sign Up</button>
+              </form>
+              {message && <div className="alert alert-info mt-3">{message}</div>}
+              <p className="mt-3 text-center">
+                Already have an account?{" "}
+                <button onClick={onSwitchToLogin} className="btn btn-link p-0">Login</button>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    textAlign: "center",
-    marginTop: "100px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "10px",
-  },
-  input: {
-    padding: "10px",
-    width: "250px",
-    fontSize: "16px",
-  },
-  button: {
-    padding: "10px 20px",
-    fontSize: "16px",
-    cursor: "pointer",
-  },
-  link: {
-    background: "none",
-    border: "none",
-    color: "blue",
-    textDecoration: "underline",
-    cursor: "pointer",
-  },
-  message: {
-    marginTop: "10px",
-    color: "green",
-  },
-};
 
 export default Register;

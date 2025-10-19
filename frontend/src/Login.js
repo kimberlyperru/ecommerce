@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import axios from "axios";
 
 function Login({ onLoginSuccess, onSwitchToRegister }) {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
@@ -23,70 +23,47 @@ function Login({ onLoginSuccess, onSwitchToRegister }) {
   };
 
   return (
-    <div style={styles.container}>
-      <h2>🔐 Sign In</h2>
-      <form onSubmit={handleLogin} style={styles.form}>
-        <input
-          name="username"
-          placeholder="Username"
-          value={form.username}
-          onChange={handleChange}
-          required
-          style={styles.input}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          required
-          style={styles.input}
-        />
-        <button type="submit" style={styles.button}>Login</button>
-        {error && <p style={styles.error}>{error}</p>}
-      </form>
-      <p>
-        Don’t have an account?{" "}
-        <button onClick={onSwitchToRegister} style={styles.link}>
-          Sign up
-        </button>
-      </p>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-6 col-lg-4">
+          <div className="card p-4">
+            <div className="card-body">
+              <h2 className="text-center mb-4">🔐 Sign In</h2>
+              <form onSubmit={handleLogin}>
+                <div className="mb-3">
+                  <input
+                    name="username"
+                    placeholder="Username"
+                    className="form-control"
+                    value={form.username}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    className="form-control"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary w-100">Login</button>
+                {error && <p className="text-danger mt-3">{error}</p>}
+              </form>
+              <p className="mt-3 text-center">
+                Don’t have an account?{" "}
+                <button onClick={onSwitchToRegister} className="btn btn-link p-0">Sign up</button>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    textAlign: "center",
-    marginTop: "100px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "10px",
-  },
-  input: {
-    padding: "10px",
-    width: "250px",
-    fontSize: "16px",
-  },
-  button: {
-    padding: "10px 20px",
-    fontSize: "16px",
-    cursor: "pointer",
-  },
-  error: {
-    color: "red",
-  },
-  link: {
-    background: "none",
-    border: "none",
-    color: "blue",
-    textDecoration: "underline",
-    cursor: "pointer",
-  },
-};
 
 export default Login;

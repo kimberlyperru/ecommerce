@@ -5,7 +5,12 @@ const mongoose = require('mongoose');
 const productSchema = new mongoose.Schema({
     name: String,
     price: Number,
-    description: String,
+    description: String, 
+    seller: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    }
 });
 
 //Create the Product model from the schema

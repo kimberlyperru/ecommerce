@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "concurrently": "^8.2.2"
+  },
+  "scripts": {
+    "start": "concurrently \"npm start --prefix frontend\" \"npm start --prefix backend\""
+  }
+}
