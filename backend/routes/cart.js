@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
+const Product = require('../models/Product'); // Import Product model for population
 const User = require('../models/User'); // Import the User model
 
 const populateCart = {
@@ -11,10 +11,10 @@ const populateCart = {
     }
 };
 
-const getPopulatedCart = (userId) => User.findById(userId).populate(populateCart);
+const getPopulatedCart = (userId) => User.findById(userId).populate('cart.product');
 
 // Get user's cart
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', async (req, res) => { // Middleware is applied in server.js
     try {
         const user = await getPopulatedCart(req.user);
         if (!user) {
@@ -27,7 +27,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // Add item to cart
-router.post('/add', async (req, res) => {
+router.post('/add', async (req, res) => { // Middleware is applied in server.js
     const { productId, quantity } = req.body;
     try {
         const user = await User.findById(req.user);
@@ -49,7 +49,7 @@ router.post('/add', async (req, res) => {
 });
 
 // Sync local cart with user's cart on login
-router.post('/sync', async (req, res) => {
+router.post('/sync', async (req, res) => { // Middleware is applied in server.js
     const { cart: localCart } = req.body;
     try {
         const user = await User.findById(req.user);
@@ -75,7 +75,7 @@ router.post('/sync', async (req, res) => {
 });
 
 // Update item quantity in cart
-router.post('/update', async (req, res) => {
+router.post('/update', async (req, res) => { // Middleware is applied in server.js
     const { productId, quantity } = req.body;
 
     // Ensure quantity is a positive integer
@@ -106,7 +106,7 @@ router.post('/update', async (req, res) => {
 });
 
 // Remove item from cart
-router.post('/remove', async (req, res) => {
+router.post('/remove', async (req, res) => { // Middleware is applied in server.js
     const { productId } = req.body;
     try {
         const user = await User.findById(req.user);
@@ -114,23 +114,6 @@ router.post('/remove', async (req, res) => {
         await user.save();
         const updatedUser = await getPopulatedCart(req.user);
         res.status(200).json(updatedUser.cart);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Checkout (mock)
-router.post('/checkout', async (req, res) => {
-    try {
-        const user = await User.findById(req.user);
-        if (user.cart.length === 0) {
-            return res.status(400).json({ message: "Cart is empty" });
-        }
-        // In a real app, you would process payment here.
-        // For now, we'll just clear the cart.
-        user.cart = [];
-        await user.save();
-        res.status(200).json({ message: "Checkout successful! Your order is on its way." });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

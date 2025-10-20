@@ -1,12 +1,12 @@
 // src/App.js
 import React, { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
-import axios from "axios";
 import Login from "./Login";
 import Register from "./Register";
 import ProductList from './ProductList';
 import ProductForm from './ProductForm';
 import Cart from './Cart';
+import api from './api';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -16,6 +16,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [view, setView] = useState('products'); // 'products' or 'cart'
+  const [pollingIntervalId, setPollingIntervalId] = useState(null);
 
   const getUserId = () => {
     const token = localStorage.getItem("token");
@@ -40,7 +41,15 @@ function App() {
       const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
       setCartItems(localCart);
     }
-  }, []);
+
+    // Cleanup polling on component unmount
+    return () => {
+      if (pollingIntervalId) {
+        clearInterval(pollingIntervalId);
+      }
+    };
+
+  }, [pollingIntervalId]);
 
   // Update cart in localStorage for guest users
   useEffect(() => {
@@ -52,8 +61,7 @@ function App() {
   // Fetch data on component mount
   useEffect(() => {
     // Fetch Products for all users
-    axios
-      .get("http://localhost:5000/simple-ecom/products")
+    api.get("/products")
       .then((res) => setProducts(res.data))
       .catch((err) => {
         if (err.response && err.response.status === 404) {
@@ -65,22 +73,17 @@ function App() {
 
     if (isLoggedIn) {
       // Fetch Cart
-      const token = localStorage.getItem("token");
       const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
 
       if (localCart.length > 0) {
         // Sync local cart with backend
-        axios.post("http://localhost:5000/simple-ecom/cart/sync", { cart: localCart }, {
-          headers: { Authorization: `Bearer ${token}` }
-        }).then(res => {
+        api.post("/cart/sync", { cart: localCart }).then(res => {
           setCartItems(res.data);
           localStorage.removeItem('cart'); // Clear local cart after syncing
         }).catch(err => console.error("Failed to sync cart", err));
       } else {
         // Fetch cart from backend
-      axios.get("http://localhost:5000/simple-ecom/cart", {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(res => setCartItems(res.data))
+      api.get("/cart").then(res => setCartItems(res.data))
         .catch(err => {
           if (err.response && err.response.status === 404) {
             setCartItems([]); // Cart is empty for new user, this is fine.
@@ -112,11 +115,8 @@ function App() {
       alert("Please fill in all fields before adding a product.");
       return;
     }
-    const token = localStorage.getItem("token");
     try {
-      const res = await axios.post("http://localhost:5000/simple-ecom/products", form, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.post("/products", form);
       // Add the new product to the state without reloading
       setProducts([...products, res.data.product]);
       setForm({ name: "", price: "", description: "" }); // Clear form
@@ -129,11 +129,8 @@ function App() {
 
   // Update an existing product
   const updateProduct = async () => {
-    const token = localStorage.getItem("token");
     try {
-      const res = await axios.put(`http://localhost:5000/simple-ecom/products/${editingProduct._id}`, form, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.put(`/products/${editingProduct._id}`, form);
       // Update the product in the state
       setProducts(
         products.map((p) =>
@@ -151,11 +148,8 @@ function App() {
 
   // Delete product
   const deleteProduct = (productId) => {
-    const token = localStorage.getItem("token");
-    axios
-      .delete(`http://localhost:5000/simple-ecom/products/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    api
+      .delete(`/products/${productId}`)
       .then(() => {
         // Remove the deleted product from the state without reloading
         setProducts(products.filter((p) => p._id !== productId));
@@ -171,12 +165,8 @@ function App() {
 
   const addToCart = async (productId) => {
     if (isLoggedIn) {
-      const token = localStorage.getItem("token");
       try {
-        const res = await axios.post("http://localhost:5000/simple-ecom/cart/add",
-          { productId, quantity: 1 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const res = await api.post("/cart/add", { productId, quantity: 1 });
         setCartItems(res.data);
         alert("Item added to cart!");
       } catch (error) {
@@ -200,61 +190,96 @@ function App() {
 
   const updateCartQuantity = async (productId, quantity) => {
     const newQuantity = parseInt(quantity, 10);
+    // Prevent non-numeric or negative values other than 0 for removal
+    if (isNaN(newQuantity) || newQuantity < 0) {
+      return;
+    }
 
     if (isLoggedIn) {
-      const token = localStorage.getItem("token");
       try {
-        const res = await axios.post("http://localhost:5000/simple-ecom/cart/update",
-          { productId, quantity: newQuantity },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const res = await api.post("/cart/update", { productId, quantity: newQuantity });
         setCartItems(res.data);
       } catch (error) {
         console.error("Failed to update cart quantity", error);
         alert("Could not update item quantity.");
       }
     } else {
-      // Handle guest cart in localStorage
       if (newQuantity > 0) {
         setCartItems(cartItems.map(item => item.product._id === productId ? { ...item, quantity: newQuantity } : item));
       } else {
+        // If quantity is 0, remove the item for guests as well
         setCartItems(cartItems.filter(item => item.product._id !== productId));
       }
     }
   };
 
   const removeFromCart = async (productId) => {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await axios.post("http://localhost:5000/simple-ecom/cart/remove",
-        { productId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setCartItems(res.data);
-    } catch (error) {
-      console.error("Failed to remove from cart", error);
-    }
-  };
-
-  const checkout = async () => {
     if (isLoggedIn) {
-      const token = localStorage.getItem("token");
       try {
-        const res = await axios.post("http://localhost:5000/simple-ecom/cart/checkout", {}, { headers: { Authorization: `Bearer ${token}` } });
-        alert(res.data.message);
-        setCartItems([]);
+        const res = await api.post("/cart/remove", { productId });
+        setCartItems(res.data);
       } catch (error) {
-        console.error("Checkout failed", error);
-        alert("Checkout failed. Please try again.");
+        console.error("Failed to remove from cart", error);
       }
     } else {
-      // For guests, prompt to log in or register
-      alert("Please log in or register to complete your purchase.");
-      setShowRegister(false); // Or direct to login
+      // Handle guest cart removal from localStorage
+      setCartItems(cartItems.filter(item => item.product._id !== productId));
     }
-
   };
 
+  const pollForCartClearance = () => {
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await api.get("/cart");
+        if (res.data.length === 0) {
+          clearInterval(intervalId);
+          setPollingIntervalId(null);
+          setCartItems([]);
+          alert("M-Pesa payment successful! Your cart has been cleared.");
+          setView('products'); // Switch back to products view
+        }
+      } catch (error) {
+        console.error("Polling for cart clearance failed:", error);
+        clearInterval(intervalId); // Stop polling on error
+        setPollingIntervalId(null);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    setPollingIntervalId(intervalId);
+  };
+
+  const handleCheckout = async (paymentDetails) => {
+    if (!isLoggedIn) {
+      alert("Please log in or register to complete your purchase.");
+      handleLoginClick();
+      return;
+    }
+
+    try {
+      const res = await api.post("/checkout", paymentDetails);
+
+      if (paymentDetails.paymentMethod === 'mpesa') {
+        alert("M-Pesa payment initiated. Please check your phone to complete the transaction. We will notify you upon completion.");
+        setView('products'); // Move user away from cart
+        pollForCartClearance(); // Start polling for cart update
+      } else if (paymentDetails.paymentMethod === 'bank_transfer' || paymentDetails.paymentMethod === 'paypal') {
+        // This part assumes you will implement the redirection to an order confirmation page
+        alert(res.data.message || "Order placed successfully!");
+        setCartItems([]); // Clear cart immediately for these methods
+        setView('products');
+        // Ideally, you would navigate to the order confirmation page here:
+        // navigate(`/order-confirmation/${res.data.orderId}`);
+      }
+
+    } catch (error) {
+      console.error("Checkout failed", error);
+      const errorMessage = error.response?.data?.message || "Checkout failed. Please try again.";
+      alert(errorMessage);
+      if (pollingIntervalId) {
+        clearInterval(pollingIntervalId); // Stop polling if checkout fails
+      }
+    }
+  };
   // Set up the form for editing a product
   const handleEdit = (product) => {
     setEditingProduct(product);
@@ -328,7 +353,7 @@ function App() {
           <ProductList products={products} onEdit={handleEdit} onDelete={deleteProduct} onAddToCart={addToCart} currentUserId={currentUserId} />
         </>
       ) : (
-        <Cart cartItems={cartItems} onUpdateQuantity={updateCartQuantity} onRemoveFromCart={removeFromCart} onCheckout={checkout} />
+        <Cart cartItems={cartItems} onUpdateQuantity={updateCartQuantity} onRemoveItem={removeFromCart} onCheckout={handleCheckout} />
       )}
     </div>
   );

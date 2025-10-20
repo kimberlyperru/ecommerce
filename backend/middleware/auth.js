@@ -1,23 +1,30 @@
 const jwt = require('jsonwebtoken');
 
-function authMiddleware(req, res, next) {
+/**
+ * Middleware to authenticate and protect routes.
+ * It verifies the JWT token from the Authorization header.
+ */
+module.exports = function(req, res, next) {
+    // 1. Get token from the header
     const authHeader = req.header('Authorization');
-    if (!authHeader) {
-        return res.status(401).send('Access denied. No token provided.');
-    }
 
-    const token = authHeader.replace('Bearer ', '');
-    if (!token) {
-        return res.status(401).send('Access denied. No token provided.');
+    // 2. Check if token exists
+    if (!authHeader) {
+        return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded.userId;
-        next();
-    } catch (ex) {
-        res.status(400).send('Invalid token.');
-    }
-}
+        // The token is expected to be in the format "Bearer <token>"
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ message: 'Token format is invalid, authorization denied' });
+        }
 
-module.exports = authMiddleware;
+        // 3. Verify the token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded.userId; // Add user ID from payload to request object
+        next(); // Proceed to the next middleware or route handler
+    } catch (err) {
+        res.status(401).json({ message: 'Token is not valid' });
+    }
+};

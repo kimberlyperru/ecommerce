@@ -34,12 +34,18 @@ mongoose.connect(MONGO_URI)
 const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
 const cartRoutes = require('./routes/cart');
-const authMiddleware = require('./middleware/auth');
+const mpesaRoutes = require('./routes/mpesa');
+const orderRoutes = require('./routes/orders');
+const authMiddleware = require('./middleware/auth'); // Import the auth middleware
+const checkoutRoutes = require('./routes/checkout');
 
 //use routes
 app.use('/simple-ecom/products', productRoutes); // GET routes are public
 app.use('/simple-ecom/auth', authRoutes); // Auth routes (login/register)
+app.use('/simple-ecom/orders', authMiddleware, orderRoutes); // Protect all order routes
 app.use('/simple-ecom/cart', authMiddleware, cartRoutes); // Protect all cart routes
+app.use('/simple-ecom/checkout', authMiddleware, checkoutRoutes); // Protect all checkout/payment routes
+app.use('/simple-ecom/mpesa', mpesaRoutes); // M-Pesa payment routes
 
 //start the server
 const PORT = process.env.PORT || 5000;
