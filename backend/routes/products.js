@@ -12,8 +12,8 @@ router.post('/', authMiddleware, async (req, res) => {
         const { name, description, price  } = req.body;
         const product = new Product({ name, description, price, seller: req.user });
         await product.save();
-        const populatedProduct = await product.populate('seller', 'username');
-        res.status(200).json({ message: "Product created successfully", product: populatedProduct });
+        const populatedProduct = await product.populate('seller', 'username'); // Populating here is good
+        res.status(201).json({ message: "Product created successfully", product: populatedProduct });
     } catch (error) {
         res.status(500).json({ message: "Product creation failed", error });
     }

@@ -4,7 +4,6 @@
     "concurrently": "^8.2.2"
   },
   "scripts": {
-  "build": "cd frontend && yarn && npm run build && cd ../backend && yarn",
-  "start": "concurrently \"npm start --prefix frontend\" \"npm start --prefix backend\""
-}
+    "start": "concurrently \"npm start --prefix frontend\" \"npm start --prefix backend\""
+  }
 }

@@ -5,17 +5,23 @@ import axios from "axios";
 function Login({ onLoginSuccess, onSwitchToRegister }) {
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setError(""); // Clear error on new input
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccessMessage("");
     try {
+      // It's good practice to move the base URL to an environment variable
+      // e.g., const res = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, form);
       const res = await axios.post("http://localhost:5000/simple-ecom/auth/login", form);
       localStorage.setItem("token", res.data.token);
-      alert("Login successful!");
+      setSuccessMessage("Login successful! Redirecting...");
       onLoginSuccess();
     } catch (err) {
       setError("Invalid name or password.");
@@ -52,6 +58,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }) {
                   />
                 </div>
                 <button type="submit" className="btn btn-primary w-100">Login</button>
+                {successMessage && <p className="text-success mt-3">{successMessage}</p>}
                 {error && <p className="text-danger mt-3">{error}</p>}
               </form>
               <p className="mt-3 text-center">

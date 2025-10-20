@@ -16,6 +16,8 @@ function Register({ onSwitchToLogin }) {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
+      // It's good practice to move the base URL to an environment variable
+      // e.g., await axios.post(`${process.env.REACT_APP_API_URL}/auth/register`, form);
       await axios.post("http://localhost:5000/simple-ecom/auth/register", form);
       setMessage("✅ Registration successful! You can now log in.");
       setTimeout(onSwitchToLogin, 1500); // auto-switch after success
