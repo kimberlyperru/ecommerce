@@ -27,6 +27,7 @@ function Register({ onSwitchToLogin }) {
   };
 
   return (
+     // Outer container with Bootstrap margin for spacing
     <div className="container mt-5">
       <div className="row justify-content-center">
         <div className="col-md-6 col-lg-4">
@@ -36,17 +37,17 @@ function Register({ onSwitchToLogin }) {
               <form onSubmit={handleRegister}>
                 <div className="mb-3">
                   <input
-                    name="username"
-                    placeholder="Username"
-                    className="form-control"
-                    value={form.username}
-                    onChange={handleChange}
-                    required
+                    name="username" // Added name attribute for form handling
+                    placeholder="Username" // Changed type to text for username
+                    className="form-control" // Bootstrap class for styling
+                    value={form.username} // Controlled component value
+                    onChange={handleChange} // Handle input change (updates state)
+                    required // HTML5 validation
                   />
                 </div>
                 <div className="mb-3">
                   <input
-                    type="password"
+                    type="password" //hide password input
                     name="password"
                     placeholder="Password"
                     className="form-control"
@@ -60,7 +61,10 @@ function Register({ onSwitchToLogin }) {
               {message && <div className="alert alert-info mt-3">{message}</div>}
               <p className="mt-3 text-center">
                 Already have an account?{" "}
-                <button onClick={onSwitchToLogin} className="btn btn-link p-0">Login</button>
+                <button 
+                onClick={onSwitchToLogin} // Switch to login view
+                className="btn btn-link p-0" // Bootstrap link style
+                >Login</button>
               </p>
             </div>
           </div>

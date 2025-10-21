@@ -1,3 +1,6 @@
+//import necessary modules
+//modules is a single file that contains re-useable code (a book in a shelf)
+//library a collection of modules packed together to provide a broader functionality (the shelf itself)
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');

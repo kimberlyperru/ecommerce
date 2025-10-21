@@ -1,5 +1,4 @@
 //product routes
-
 //import necessary modules
 const express = require('express');
 const router = express.Router();
@@ -76,9 +75,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 });
 
-//delete product by ID
-router.delete('/:id', authMiddleware, async (req, res) => {
-    try {
+     //delete product by ID
+     router.delete('/:id', authMiddleware, async (req, res) => {
+     try {
         //Get product ID from the URL and delete the product
         const product = await Product.findById(req.params.id);
         // If PRODUCT NOT FOUND

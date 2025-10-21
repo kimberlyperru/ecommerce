@@ -1,3 +1,4 @@
+//import nessecary modules
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product'); // Import Product model for population
