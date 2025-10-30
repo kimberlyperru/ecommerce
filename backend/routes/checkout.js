@@ -85,26 +85,67 @@ router.post('/', auth, async (req, res) => {
                     return res.status(400).json({ message: 'Invalid phone number format. Please use a valid Safaricom number (e.g., 0712345678).' });
                 }
 
-                // --- M-Pesa STK Push Logic (DEMO MODE) ---
-                // In this demo mode, we'll simulate a successful payment directly
-                // without calling the M-Pesa API.
+                // --- M-Pesa STK Push Logic ---
+                try {
+                    const accessToken = await getAccessToken(); // Get M-Pesa access token
+                    const timestamp = getTimestamp();
+                    const shortCode = process.env.MPESA_SHORTCODE; // Your M-Pesa Paybill/Till number
+                    const passkey = process.env.MPESA_PASSKEY; // Your M-Pesa Passkey
+                    const callbackUrl = process.env.MPESA_CALLBACK_URL; // Your callback URL for M-Pesa
 
-                // 1. Mark the order as completed
-                newOrder.paymentStatus = 'completed';
-                newOrder.transactionId = `demo_${Date.now()}`; // Create a dummy transaction ID
+                    if (!shortCode || !passkey || !callbackUrl) {
+                        console.error('M-Pesa environment variables (SHORTCODE, PASSKEY, CALLBACK_URL) not set.');
+                        return res.status(500).json({ message: 'M-Pesa configuration error. Please check server logs.' });
+                    }
 
-                // 2. Save the order
-                await newOrder.save();
+                    const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString('base64');
 
-                // 3. Clear the user's cart
-                user.cart = [];
-                await user.save();
+                    const stkPushPayload = {
+                        BusinessShortCode: shortCode,
+                        Password: password,
+                        Timestamp: timestamp,
+                        TransactionType: 'CustomerPayBillOnline', // Or 'CustomerBuyGoodsOnline' for Till
+                        Amount: totalAmount,
+                        PartyA: formattedPhone, // Customer's phone number
+                        PartyB: shortCode,
+                        PhoneNumber: formattedPhone,
+                        CallBackURL: callbackUrl,
+                        AccountReference: `Order-${newOrder._id}`, // Unique identifier for your order
+                        TransactionDesc: `Payment for Order ${newOrder._id}`
+                    };
 
-                // 4. Return a success response
-                return res.status(200).json({
-                    message: 'Payment successful! Thank you for your purchase.',
-                    orderId: newOrder._id
-                });
+                    const darajaResponse = await axios.post(
+                        'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', // Use 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest' for production
+                        stkPushPayload,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${accessToken}`
+                            }
+                        }
+                    );
+
+                    // Check Daraja API response
+                    if (darajaResponse.data.ResponseCode === '0') {
+                        newOrder.transactionId = darajaResponse.data.CheckoutRequestID; // Store this to match with callback
+                        await newOrder.save(); // Save order with pending status and CheckoutRequestID
+
+                        // Do NOT clear cart here. Cart is cleared upon successful callback.
+                        return res.status(200).json({
+                            message: 'M-Pesa STK Push initiated. Please complete the payment on your phone.',
+                            orderId: newOrder._id,
+                            checkoutRequestID: darajaResponse.data.CheckoutRequestID
+                        });
+                    } else {
+                        // M-Pesa API returned an error
+                        console.error('M-Pesa STK Push Error:', darajaResponse.data);
+                        return res.status(400).json({
+                            message: darajaResponse.data.ResponseDescription || 'M-Pesa STK Push failed to initiate.'
+                        });
+                    }
+                } catch (mpesaError) {
+                    console.error('M-Pesa Integration Error:', mpesaError.response ? mpesaError.response.data : mpesaError.message);
+                    return res.status(500).json({ message: 'Failed to initiate M-Pesa payment.' });
+                }
 
             case 'paypal':
                 // --- PayPal Logic (DEMO) ---

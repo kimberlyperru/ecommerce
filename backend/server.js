@@ -22,7 +22,7 @@ app.use(cors({
 
 //connect to MongoDB
 //Make sure MongoDB is running locally or in MongoDB Atlas
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ecommerce';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://Techveli:Kimberly71!@cluster0.4do64ff.mongodb.net/?appName=Cluster0';
 mongoose.connect(MONGO_URI)
 .then(() => {
     console.log('Connected to MongoDB');
