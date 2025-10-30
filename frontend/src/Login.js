@@ -20,7 +20,7 @@ function Login({ onLoginSuccess, onSwitchToRegister }) {
     try {
       // It's good practice to move the base URL to an environment variable
       // e.g., const res = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, form);
-      const res = await axios.post("http://localhost:5000/simple-ecom/auth/login", form);
+      const res = await axios.post("https://ecommerce-backend-qbrh.onrender.com/auth/login", form);
       localStorage.setItem("token", res.data.token);
       setSuccessMessage("Login successful! Redirecting...");
       onLoginSuccess();

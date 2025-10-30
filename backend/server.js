@@ -50,5 +50,5 @@ app.use('/simple-ecom/mpesa', mpesaRoutes); // M-Pesa payment routes
 //start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Ecommerce backend server is running on http://localhost:${PORT}`);
+    console.log(`Ecommerce backend server is running on https://ecommerce-backend-qbrh.onrender.com`);
 });
